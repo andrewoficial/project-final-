@@ -21,6 +21,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void getSuccess() throws Exception {
+        // Проверка успешного получения профиля авторизованным пользователем
         perform(get(REST_URL))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -31,6 +32,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
 
     @Test
     void getUnauthorized() throws Exception {
+        // Проверка, что неавторизованный пользователь не может получить профиль (401)
         perform(get(REST_URL))
                 .andDo(print())
                 .andExpect(status().isUnauthorized());
@@ -39,6 +41,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void updateSuccess() throws Exception {
+        // Проверка успешного обновления профиля с валидными данными
         ProfileTo updateTo = ProfileTestData.USER_PROFILE_TO;
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -50,6 +53,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void updateInvalid() throws Exception {
+        // Проверка, что при отправке некорректных данных (пустые строки) возвращается 422
         ProfileTo invalidTo = ProfileTestData.getInvalidTo();
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -61,6 +65,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void updateWithUnknownNotification() throws Exception {
+        // Проверка, что указание несуществующего типа уведомления приводит к ошибке 422
         ProfileTo unknownNotificationTo = ProfileTestData.getWithUnknownNotificationTo();
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -72,6 +77,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void updateWithUnknownContactCode() throws Exception {
+        // Проверка, что указание несуществующего кода контакта приводит к ошибке 422
         ProfileTo unknownContactTo = ProfileTestData.getWithUnknownContactTo();
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -83,6 +89,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
     @Test
     @WithUserDetails("user@gmail.com")
     void updateWithContactHtmlUnsafe() throws Exception {
+        // Проверка, что попытка сохранить HTML-код в контакте приводит к ошибке 422 (защита от XSS)
         ProfileTo unsafeContactTo = ProfileTestData.getWithContactHtmlUnsafeTo();
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -93,6 +100,7 @@ class ProfileRestControllerTest extends AbstractControllerTest {
 
     @Test
     void updateUnauthorized() throws Exception {
+        // Проверка, что неавторизованный пользователь не может обновить профиль (401)
         ProfileTo anyTo = ProfileTestData.USER_PROFILE_TO;
         perform(put(REST_URL)
                 .contentType(MediaType.APPLICATION_JSON)
