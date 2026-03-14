@@ -7,3 +7,4 @@ attachments
 *.patch
 
 
+/.env
