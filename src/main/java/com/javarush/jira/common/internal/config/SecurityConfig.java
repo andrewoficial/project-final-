@@ -1,5 +1,6 @@
 package com.javarush.jira.common.internal.config;
 
+import com.javarush.jira.common.internal.security.JwtAuthenticationFilter;
 import com.javarush.jira.login.AuthUser;
 import com.javarush.jira.login.Role;
 import com.javarush.jira.login.internal.UserRepository;
@@ -12,6 +13,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,6 +27,7 @@ import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCo
 import org.springframework.security.oauth2.client.http.OAuth2ErrorResponseErrorHandler;
 import org.springframework.security.oauth2.core.http.converter.OAuth2AccessTokenResponseHttpMessageConverter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Arrays;
@@ -39,6 +43,7 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -60,11 +65,16 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole(Role.ADMIN.name())
                 .requestMatchers("/api/mngr/**").hasAnyRole(Role.ADMIN.name(), Role.MANAGER.name())
                 .requestMatchers(HttpMethod.POST, "/api/users").anonymous()
+                .requestMatchers("/api/login").permitAll()
+                .requestMatchers("/api/logout").permitAll() // разрешаем logout
                 .requestMatchers("/api/**").authenticated()
-                .and().httpBasic()
-                .authenticationEntryPoint(restAuthenticationEntryPoint)
-                .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER) // support sessions Cookie for UI ajax
-                .and().csrf().disable();
+                .and().httpBasic().disable()
+                .formLogin().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().csrf().disable()
+                .exceptionHandling().authenticationEntryPoint(restAuthenticationEntryPoint);
+
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -73,14 +83,16 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests()
                 .requestMatchers("/view/unauth/**", "/ui/register/**", "/ui/password/**").anonymous()
-                .requestMatchers("/","/index", "/doc", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/static/**").permitAll()
+                .requestMatchers("/", "/index", "/doc", "/v3/api-docs/**", "/swagger-ui.html", "/swagger-ui/**", "/static/**").permitAll()
                 .requestMatchers("/ui/admin/**", "/view/admin/**").hasRole(Role.ADMIN.name())
                 .requestMatchers("/ui/mngr/**").hasAnyRole(Role.ADMIN.name(), Role.MANAGER.name())
                 .anyRequest().authenticated()
-                .and().formLogin().permitAll()
+                .and()
+                .formLogin().permitAll()
                 .loginPage("/view/login")
                 .defaultSuccessUrl("/", true)
-                .and().oauth2Login()
+                .and()
+                .oauth2Login().permitAll()
                 .loginPage("/view/login")
                 .defaultSuccessUrl("/", true)
                 .tokenEndpoint()
@@ -88,13 +100,20 @@ public class SecurityConfig {
                 .and()
                 .userInfoEndpoint()
                 .userService(customOAuth2UserService)
-                .and().and().logout()
+                .and()
+                .and()
+                .logout()
                 .logoutUrl("/ui/logout")
                 .logoutSuccessUrl("/")
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
-                .deleteCookies("JSESSIONID")
-                .and().csrf().disable();
+                .deleteCookies("JSESSIONID", "jwtToken") // удаляем оба cookie
+                .and()
+                .csrf().disable()
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED); // разрешаем сессии
+
+        // Добавляем JWT фильтр перед стандартным фильтром аутентификации
+        http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
@@ -110,5 +129,11 @@ public class SecurityConfig {
         restTemplate.setErrorHandler(new OAuth2ErrorResponseErrorHandler());
         accessTokenResponseClient.setRestOperations(restTemplate);
         return accessTokenResponseClient;
+    }
+
+    //Забираею у спринга управление потоком авторизации
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
     }
 }

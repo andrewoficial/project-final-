@@ -115,3 +115,7 @@ server:
       enabled: true # Enable http encoding support
       force: true
 springdoc.swagger-ui.path: /doc
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 86400000 # 24 часа в миллисекундах
