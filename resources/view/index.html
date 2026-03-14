@@ -1,13 +1,22 @@
 <!DOCTYPE html>
 <html lang="ru" xmlns:th="http://www.thymeleaf.org">
-<!--/*@thymesVar id="authUser" type="com.javarush.jira.login.AuthUser"*/-->
 
-<th:block th:replace="~{layout/main::page(title='JiraRush: mini bugtracking system',appMain=~{::appMain})}">
+<th:block th:replace="~{layout/main::page(title=#{app.title}, appMain=~{::appMain})}">
     <appMain>
-        <h1>JiraRush Home page</h1>
+        <h1 th:text="#{app.title}">JiraRush Home page</h1>
+        <p th:text="#{joke}">
+            Возможно открывать директ сюда было неверно. Но вот картинка с аниме, что бы никто не злился.
+        </p>
+
+        <img src="https://i.pinimg.com/736x/3e/3d/00/3e3d004a4405934a2db2abaae86e10bd.jpg"
+             alt="Image from Pinterest"
+             width="600"
+             height="auto"
+             style="max-width: 100%; height: auto;">
+        <br>
         <div th:if="${authUser} != null">
             <form action="/ui/logout" method="post">
-                <button class="btn btn-primary btn-lg mt-3" type="submit">Logout</button>
+                <button class="btn btn-primary btn-lg mt-3" type="submit" th:text="#{logout}">Logout</button>
             </form>
         </div>
     </appMain>

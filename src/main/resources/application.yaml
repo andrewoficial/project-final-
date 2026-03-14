@@ -33,6 +33,10 @@ spring:
   liquibase:
     changeLog: "classpath:db/changelog.sql"
 
+  messages:
+    basename: messages/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   # Jackson Fields Serialization
   jackson:
     visibility:
