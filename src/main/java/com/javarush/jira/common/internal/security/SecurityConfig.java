@@ -1,6 +1,6 @@
-package com.javarush.jira.common.internal.config;
+package com.javarush.jira.common.internal.security;
 
-import com.javarush.jira.common.internal.security.JwtAuthenticationFilter;
+import com.javarush.jira.common.internal.config.RestAuthenticationEntryPoint;
 import com.javarush.jira.login.AuthUser;
 import com.javarush.jira.login.Role;
 import com.javarush.jira.login.internal.UserRepository;

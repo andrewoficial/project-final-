@@ -1,11 +1,10 @@
 package com.javarush.jira.login.internal.web;
 
 import com.javarush.jira.common.internal.security.JwtUtil;
-import com.javarush.jira.login.User;
-import com.javarush.jira.login.internal.UserRepository;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,27 +22,29 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserRepository userRepository;
 
     @PostMapping
-    public ResponseEntity<?> authenticate(@RequestBody LoginRequest request) {
+    public ResponseEntity<?> authenticate(@RequestBody LoginRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtUtil.generateToken(request.getEmail());
-        return ResponseEntity.ok(new JwtResponse(jwt));
+
+        // Устанавливаем httpOnly cookie
+        Cookie cookie = new Cookie("jwtToken", jwt);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // для локальной разработки (без HTTPS)
+        cookie.setPath("/");
+        cookie.setMaxAge(24 * 60 * 60); // 24 часа
+        response.addCookie(cookie);
+
+        return ResponseEntity.ok().build();
     }
 
     @Data
     public static class LoginRequest {
         private String email;
         private String password;
-    }
-
-    @Data
-    public static class JwtResponse {
-        private final String token;
-        private final String type = "Bearer";
     }
 }

@@ -76,9 +76,6 @@
         });
 
         if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('jwtToken', data.token);
-            // Перенаправляем на главную
             window.location.href = '/';
         } else {
             alert('Invalid credentials');
