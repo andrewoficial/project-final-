@@ -1,7 +1,7 @@
 #  https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 app:
   host-url: http://localhost:8080
-  test-mail: jira4jr@gmail.com
+  test-mail: ${MAIL_USERNAME_TEST}
   templates-update-cache: 5s
   mail-sending-props:
     core-pool-size: 8
@@ -26,7 +26,7 @@ spring:
         # https://stackoverflow.com/questions/21257819/what-is-the-difference-between-hibernate-jdbc-fetch-size-and-hibernate-jdbc-batc
         jdbc.batch_size: 20
   datasource:
-    url: jdbc:postgresql://localhost:5432/jira
+    url: ${DB_URI}
     username: ${DB_USER}
     password: ${DB_PASSWORD}
 
@@ -90,7 +90,7 @@ spring:
           starttls:
             enable: true
           auth: true
-    host: smtp.gmail.com
+    host: ${MAIL_PROVIDER}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     port: 587
