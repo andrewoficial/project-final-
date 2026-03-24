@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15
+    container_name: jira-postgres
+    environment:
+      POSTGRES_DB: jira
+      POSTGRES_USER: jira
+      POSTGRES_PASSWORD: JiraRush
+    ports:
+      - "5432:5432"               # опционально, для доступа извне
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: no
+
+  app:
+    build: .
+    container_name: jira-app
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/jira
+      SPRING_DATASOURCE_USERNAME: jira
+      SPRING_DATASOURCE_PASSWORD: JiraRush
+      SPRING_PROFILES_ACTIVE: prod
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_ORG_HIBERNATE: INFO
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: INFO
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./resources:/app/resources
+    restart: no
+
+  nginx:
+    image: nginx:latest
+    container_name: jira-nginx
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./resources:/opt/jirarush/resources
+    ports:
+      - "80:80"                   # фронтенд будет доступен по порту 80
+    depends_on:
+      - app
+    restart: no
+
+volumes:
+  postgres_data:
